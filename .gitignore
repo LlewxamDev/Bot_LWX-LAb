@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+data/runtime/
+npm-debug.log*
+dist/
+coverage/
+.DS_Store
+.superpowers/
