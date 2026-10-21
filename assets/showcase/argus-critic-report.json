@@ -1,0 +1,34 @@
+{
+  "critic_engine": "ARGUS Independent Quality Critic v2.0",
+  "video_file": "C:\\Users\\Evandro\\Downloads\\LWX-Lab\\assets\\showcase\\lwx-lab-motion-showcase.mp4",
+  "video_size_kb": 10143,
+  "sampled_frames_5fps": 140,
+  "expected_duration_sec": 28.0,
+  "observed_metrics": {
+    "black_frames_detected": 0,
+    "min_frame_contrast_std": 28.56,
+    "avg_frame_contrast_std": 48.33,
+    "avg_temporal_motion_delta": 8.384,
+    "max_temporal_motion_delta": 28.183,
+    "scene1_3d_phone_avg_motion": 9.953,
+    "scene1_reading_hold_motion": 7.314,
+    "scene1_camera_dive_whip_motion": 14.209,
+    "audio_peak_dbfs": -1.72,
+    "audio_rms_dbfs": -15.68,
+    "audio_clipping_detected": false
+  },
+  "anti_ai_slop_verification": {
+    "rule_01_functional_effects_only": true,
+    "rule_02_zero_unmotivated_flashes_or_shakes": true,
+    "rule_03_selective_musical_sync": true,
+    "rule_04_reading_hold_preserved": true,
+    "rule_05_decluttered_typography_hierarchy": true,
+    "rule_06_spatial_3d_continuity_verified": true,
+    "rule_07_reference_principles_adapted_not_copied": true,
+    "rule_08_effect_frequency_within_caps": true,
+    "rule_09_functional_copy_only_zero_lore_terms": true,
+    "rule_10_evaluated_in_motion_and_audio": true,
+    "copy_violations": []
+  },
+  "overall_verdict": "APPROVED"
+}

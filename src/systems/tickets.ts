@@ -1,319 +1,453 @@
 import {
-  ButtonInteraction,
+  ActionRowBuilder,
   ChannelType,
-  OverwriteResolvable,
-  PermissionsBitField,
-  TextChannel,
+  MessageFlags,
+  ModalBuilder,
+  OverwriteType,
+  PermissionFlagsBits,
+  TextInputBuilder,
+  TextInputStyle,
+  type ButtonInteraction,
+  type ChatInputCommandInteraction,
+  type EmbedBuilder,
+  type Guild,
+  type GuildMember,
+  type ModalSubmitInteraction,
+  type TextChannel,
 } from 'discord.js';
-import { ROLE_CONFIG, TIMING } from '../config/botConfig';
-import { pricingServices } from '../data/pricing';
-import { loadRuntimeState, saveRuntimeState, type TicketState } from '../storage/runtimeStore';
+import { BOT_CONFIG } from '../config/botConfig.js';
+import { pricingServices } from '../data/pricing.js';
 import {
-  buildTicketCallDecisionRow,
-  buildTicketClaimRow,
-  buildTicketFinishRow,
-  buildTicketModeButtons,
-} from '../ui/components';
-import { buildTerminalEmbed } from '../ui/embeds';
-import { buildReviewRatingPayload } from './reviews';
+  createReviewPromptButtonRow,
+  createTicketControlRow,
+  createTicketStageSelectRow,
+} from '../ui/components.js';
+import {
+  collectBrandFiles,
+  createDoubleBannerEmbeds,
+  createStudioEmbed,
+} from '../ui/embeds.js';
+import { em } from '../ui/emojis.js';
+import { registerOrderFromTicket } from './orders.js';
 
-type TicketMode = 'text' | 'call';
+const BUDGET_SERVICE_INPUT_ID = 'lwx:budget:service';
+const BUDGET_DEADLINE_INPUT_ID = 'lwx:budget:deadline';
+const BUDGET_ESTIMATE_INPUT_ID = 'lwx:budget:estimate';
+const BUDGET_BRIEFING_INPUT_ID = 'lwx:budget:briefing';
 
-function normalizeChannelName(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').slice(0, 80);
+export type BudgetSubmission = {
+  service: string;
+  deadline: string;
+  estimate: string;
+  briefing: string;
+};
+
+export function sanitizeTicketChannelName(username: string, userId: string): string {
+  const cleanUser = username
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 18);
+
+  const suffix = userId.slice(-4);
+  const base = cleanUser.length > 0 ? cleanUser : 'cliente';
+  return `pedido-${base}-${suffix}`;
 }
 
-function getService(serviceId: string) {
-  return pricingServices.find((item) => item.id === serviceId);
+export function buildBudgetModal(prefilledService?: string, prefilledBriefing?: string): ModalBuilder {
+  const modal = new ModalBuilder()
+    .setCustomId(BOT_CONFIG.customIds.budgetModal)
+    .setTitle('Solicitar Orçamento • LWX Lab');
+
+  const serviceInput = new TextInputBuilder()
+    .setCustomId(BUDGET_SERVICE_INPUT_ID)
+    .setLabel('Qual projeto você deseja encomendar?')
+    .setPlaceholder('Ex.: Banner HD, Identidade Visual, Ilustração, Pack Visual...')
+    .setMinLength(2)
+    .setMaxLength(100)
+    .setRequired(true)
+    .setStyle(TextInputStyle.Short);
+
+  if (prefilledService) {
+    serviceInput.setValue(prefilledService.slice(0, 100));
+  }
+
+  const deadlineInput = new TextInputBuilder()
+    .setCustomId(BUDGET_DEADLINE_INPUT_ID)
+    .setLabel('Prazo desejado / Urgência')
+    .setPlaceholder('Ex.: 2 dias, Esta semana, Sem pressa...')
+    .setMinLength(2)
+    .setMaxLength(80)
+    .setRequired(true)
+    .setStyle(TextInputStyle.Short);
+
+  const estimateInput = new TextInputBuilder()
+    .setCustomId(BUDGET_ESTIMATE_INPUT_ID)
+    .setLabel('Orçamento estimado (Opcional)')
+    .setPlaceholder('Ex.: R$ 20, R$ 35, A combinar conforme tabela...')
+    .setRequired(false)
+    .setMaxLength(60)
+    .setStyle(TextInputStyle.Short);
+
+  const briefingInput = new TextInputBuilder()
+    .setCustomId(BUDGET_BRIEFING_INPUT_ID)
+    .setLabel('Detalhes da ideia, estilo, cores e texto')
+    .setPlaceholder('Descreva como imagina a arte, referências, personagem, cores principais e textos...')
+    .setMinLength(10)
+    .setMaxLength(1500)
+    .setRequired(true)
+    .setStyle(TextInputStyle.Paragraph);
+
+  if (prefilledBriefing) {
+    briefingInput.setValue(prefilledBriefing.slice(0, 1450));
+  }
+
+  modal.addComponents(
+    new ActionRowBuilder<TextInputBuilder>().addComponents(serviceInput),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(deadlineInput),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(estimateInput),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(briefingInput),
+  );
+
+  return modal;
 }
 
-export function shortenStaffName(value: string) {
-  if (value.length <= 14) return value;
-  return `${value.slice(0, 14)}...`;
+export function buildTicketBriefingEmbed(
+  requesterId: string,
+  requesterTag: string,
+  submission: BudgetSubmission,
+): EmbedBuilder {
+  return createDoubleBannerEmbeds('budget', 'primary')
+    .bodyEmbed.setTitle(`Dossiê de Encomenda • ${submission.service}`)
+    .setDescription(
+      [
+        `> ${em('knight')} Olá, <@${requesterId}>! Sua sala exclusiva de direção de arte foi criada.`,
+        '> Você já pode enviar imagens de referência, links ou detalhes complementares aqui no chat.',
+        '',
+        `### ${em('palette')} Briefing Descrito pelo Cliente`,
+        `>>> ${submission.briefing}`,
+      ].join('\n'),
+    )
+    .addFields(
+      {
+        name: `${em('crown')} Cliente`,
+        value: `<@${requesterId}>\n-# ${requesterTag}`,
+        inline: true,
+      },
+      {
+        name: `${em('flame')} Serviço Solicitado`,
+        value: `**${submission.service}**`,
+        inline: true,
+      },
+      {
+        name: `${em('spark')} Prazo & Estimativa`,
+        value: `**${submission.deadline}**\n-# Orçamento: ${submission.estimate || 'Conforme tabela LWX'}`,
+        inline: true,
+      },
+    );
 }
 
-export function createTicketState(ownerId: string, serviceId: string, mode: TicketMode): TicketState {
-  return {
-    ownerId,
-    serviceId,
-    mode,
-    callStatus: mode === 'call' ? 'pending' : 'not_requested',
-    status: 'open',
-  };
+async function findExistingOpenTicket(guild: Guild, userId: string): Promise<TextChannel | null> {
+  const marker = `lwx-ticket-owner:${userId}`;
+  const cached = guild.channels.cache.find(
+    (channel): channel is TextChannel =>
+      channel.type === ChannelType.GuildText &&
+      channel.parentId === BOT_CONFIG.categories.tickets &&
+      Boolean(channel.topic?.includes(marker)),
+  );
+
+  if (cached) {
+    return cached;
+  }
+
+  const fetched = await guild.channels.fetch();
+  for (const [, channel] of fetched) {
+    if (
+      channel &&
+      channel.type === ChannelType.GuildText &&
+      channel.parentId === BOT_CONFIG.categories.tickets &&
+      channel.topic?.includes(marker)
+    ) {
+      return channel;
+    }
+  }
+
+  return null;
 }
 
-export function buildTicketModePayload(serviceId = 'custom') {
-  const service = getService(serviceId);
-  const embed = buildTerminalEmbed({
-    command: 'ticket.mode.select()',
-    title: service ? `Atendimento // ${service.label}` : 'Atendimento personalizado',
-    description: 'Escolha como quer ser atendido. Se call nao estiver disponivel, o ticket segue por texto automaticamente.',
-  });
+export async function handleBudgetOpenModalButton(
+  interaction: ButtonInteraction | ChatInputCommandInteraction,
+): Promise<void> {
+  if (interaction.isButton()) {
+    if (interaction.customId === BOT_CONFIG.customIds.budgetQuickBanner) {
+      await openBudgetModalForService(interaction, 'banner');
+      return;
+    }
+    if (interaction.customId === BOT_CONFIG.customIds.budgetQuickArt) {
+      await openBudgetModalForService(interaction, 'illustration');
+      return;
+    }
+    if (interaction.customId === BOT_CONFIG.customIds.budgetQuickBrand) {
+      await openBudgetModalForService(interaction, 'logo');
+      return;
+    }
+  }
 
-  return { embeds: [embed], components: [buildTicketModeButtons(serviceId)] };
+  await interaction.showModal(buildBudgetModal());
 }
 
-export function buildTicketOverwriteTargets(ownerId: string, botId: string, everyoneId: string) {
-  return {
-    everyoneId,
-    ownerId,
-    botId,
-    supportRoleId: ROLE_CONFIG.supportRoleId,
-  };
+export async function openBudgetModalForService(
+  interaction: ButtonInteraction,
+  serviceId: string,
+): Promise<void> {
+  const matched = pricingServices.find((s) => s.id === serviceId);
+  const prefill = matched ? `${matched.name} (${matched.priceLabel})` : undefined;
+  await interaction.showModal(buildBudgetModal(prefill));
 }
 
-function hasSupportRole(interaction: ButtonInteraction) {
-  const roles = interaction.member?.roles;
-  if (!roles || Array.isArray(roles)) return false;
-  return roles.cache.has(ROLE_CONFIG.supportRoleId);
-}
-
-function ticketOverwrites(interaction: ButtonInteraction, ownerId = interaction.user.id): OverwriteResolvable[] {
+export async function handleBudgetModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
   const guild = interaction.guild;
-  if (!guild || !interaction.client.user) return [];
-  const targets = buildTicketOverwriteTargets(ownerId, interaction.client.user.id, guild.roles.everyone.id);
+  if (!guild) {
+    await interaction.reply({
+      content: 'Esta ação só pode ser utilizada dentro do servidor.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
 
-  return [
-    { id: targets.everyoneId, deny: [PermissionsBitField.Flags.ViewChannel] },
+  const service = interaction.fields.getTextInputValue(BUDGET_SERVICE_INPUT_ID).trim();
+  const deadline = interaction.fields.getTextInputValue(BUDGET_DEADLINE_INPUT_ID).trim();
+  const estimate = interaction.fields.getTextInputValue(BUDGET_ESTIMATE_INPUT_ID).trim();
+  const briefing = interaction.fields.getTextInputValue(BUDGET_BRIEFING_INPUT_ID).trim();
+
+  if (service.length < 2 || deadline.length < 2 || briefing.length < 10) {
+    await interaction.reply({
+      embeds: [
+        createStudioEmbed('danger')
+          .setTitle('Briefing Incompleto')
+          .setDescription('> Preencha o serviço, prazo e detalhes com pelo menos 10 caracteres.'),
+      ],
+      files: collectBrandFiles(['emblem']),
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+  const existingTicket = await findExistingOpenTicket(guild, interaction.user.id);
+  if (existingTicket) {
+    const existingEmbed = createStudioEmbed('warning')
+      .setTitle('Atendimento Já em Andamento')
+      .setDescription(
+        `> ${em('ticket')} Você já possui uma sala de orçamento ativa em ${existingTicket}. Envie novas referências diretamente lá!`,
+      );
+
+    await interaction.editReply({
+      embeds: [existingEmbed],
+      files: collectBrandFiles(['emblem']),
+    });
+    return;
+  }
+
+  const channelName = sanitizeTicketChannelName(interaction.user.username, interaction.user.id);
+  const botId = interaction.client.user.id;
+
+  const permissionOverwrites = [
     {
-      id: targets.ownerId,
+      id: guild.roles.everyone.id,
+      type: OverwriteType.Role,
+      deny: [PermissionFlagsBits.ViewChannel],
+    },
+    {
+      id: interaction.user.id,
+      type: OverwriteType.Member,
       allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
-        PermissionsBitField.Flags.Connect,
-        PermissionsBitField.Flags.Speak,
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.EmbedLinks,
       ],
     },
     {
-      id: targets.botId,
+      id: BOT_CONFIG.roles.staff,
+      type: OverwriteType.Role,
       allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
-        PermissionsBitField.Flags.ManageChannels,
-        PermissionsBitField.Flags.Connect,
-        PermissionsBitField.Flags.Speak,
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.ManageMessages,
       ],
     },
     {
-      id: targets.supportRoleId,
+      id: botId,
+      type: OverwriteType.Member,
       allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
-        PermissionsBitField.Flags.Connect,
-        PermissionsBitField.Flags.Speak,
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.ManageChannels,
+        PermissionFlagsBits.ManageMessages,
       ],
     },
   ];
-}
 
-async function createTicket(interaction: ButtonInteraction, serviceId: string, mode: TicketMode) {
-  const guild = interaction.guild;
-  if (!guild) throw new Error('Ticket can only be created inside a guild.');
-
-  const service = getService(serviceId);
-  const channel = await guild.channels.create({
-    name: normalizeChannelName(`ticket-${interaction.user.username}-${service?.id ?? 'orcamento'}`),
+  const ticketChannel = await guild.channels.create({
+    name: channelName,
     type: ChannelType.GuildText,
-    permissionOverwrites: ticketOverwrites(interaction),
+    parent: BOT_CONFIG.categories.tickets,
+    topic: `lwx-ticket-owner:${interaction.user.id} | Serviço: ${service} | Prazo: ${deadline}`,
+    permissionOverwrites,
+    reason: `Novo orçamento LWX Lab solicitado por ${interaction.user.tag}`,
   });
 
-  const embed = buildTerminalEmbed({
-    command: 'ticket.session.start()',
-    title: service ? `Orcamento // ${service.label}` : 'Orcamento personalizado',
-    description: `Ola <@${interaction.user.id}>. Descreva sua ideia, referencias, prazo e onde esse projeto sera usado.\n\nModo escolhido: ${mode === 'call' ? 'call solicitada' : 'texto'}.`,
+  const newOrder = registerOrderFromTicket(
+    interaction.user.id,
+    interaction.user.tag,
+    service,
+    deadline,
+    briefing,
+  );
+
+  const { headerEmbed, files } = createDoubleBannerEmbeds('budget', 'primary');
+  const briefingEmbed = buildTicketBriefingEmbed(interaction.user.id, interaction.user.tag, {
+    service,
+    deadline,
+    estimate,
+    briefing,
   });
 
-  await channel.send({
-    embeds: [embed],
-    components: [buildTicketClaimRow()],
+  await ticketChannel.send({
+    content: `${em('flame')} <@${interaction.user.id}> • <@&${BOT_CONFIG.roles.staff}> • **Pedido #${newOrder.id}**`,
+    embeds: [headerEmbed, briefingEmbed],
+    files,
+    components: [createTicketControlRow(), createTicketStageSelectRow(newOrder.id)],
   });
 
-  if (mode === 'call') {
-    await channel.send({
-      content: `<@&${ROLE_CONFIG.supportRoleId}> o cliente pediu atendimento em call.`,
-      embeds: [
-        buildTerminalEmbed({
-          command: 'ticket.call.request()',
-          title: 'Call solicitada',
-          description: 'Support pode aceitar a call ou recusar para seguir por texto automaticamente.',
-        }),
-      ],
-      components: [buildTicketCallDecisionRow()],
-    });
-  }
+  const createdEmbed = createStudioEmbed('primary')
+    .setTitle(`Sala de Orçamento Criada • #${newOrder.id}`)
+    .setDescription(
+      [
+        `> ${em('verify')} Seu canal exclusivo foi aberto em ${ticketChannel} com o código **#${newOrder.id}**.`,
+        '> Clique no canal para acompanhar o atendimento e enviar referências visuais.',
+      ].join('\n'),
+    );
 
-  const state = loadRuntimeState();
-  state.tickets[channel.id] = createTicketState(interaction.user.id, serviceId, mode);
-  saveRuntimeState(state);
-
-  return channel;
+  await interaction.editReply({
+    embeds: [createdEmbed],
+    files: collectBrandFiles(['emblem']),
+  });
 }
 
-export async function handleTicketStart(interaction: ButtonInteraction) {
-  const serviceId = interaction.customId.split(':')[2] ?? 'custom';
-  await interaction.reply({ ...buildTicketModePayload(serviceId), ephemeral: true });
-}
-
-export async function handleTicketModeSelect(interaction: ButtonInteraction) {
-  const [, , modeValue, serviceId = 'custom'] = interaction.customId.split(':');
-  const mode = modeValue === 'call' ? 'call' : 'text';
-
-  await interaction.deferUpdate();
-
-  try {
-    const channel = await createTicket(interaction, serviceId, mode);
-    await interaction.editReply({
-      content: `Ticket aberto: ${channel}`,
-      embeds: [],
-      components: [],
-    });
-  } catch (error) {
-    console.error('Erro ao criar canal de ticket:', error);
-    await interaction.editReply({
-      content: 'Nao consegui criar o ticket. Verifique as permissoes do bot.',
-      embeds: [],
-      components: [],
-    });
-  }
-}
-
-export async function handleTicketCallDecision(interaction: ButtonInteraction) {
-  if (!hasSupportRole(interaction)) {
-    await interaction.reply({ content: 'Apenas Support pode decidir atendimento por call.', ephemeral: true });
-    return;
+function canCloseTicket(member: GuildMember | null, channelTopic: string | null, userId: string): boolean {
+  if (channelTopic?.includes(`lwx-ticket-owner:${userId}`)) {
+    return true;
   }
 
-  const textChannel = interaction.channel as TextChannel | null;
+  if (!member) {
+    return false;
+  }
+
+  return (
+    member.roles.cache.has(BOT_CONFIG.roles.staff) ||
+    member.permissions.has(PermissionFlagsBits.ManageChannels) ||
+    member.permissions.has(PermissionFlagsBits.Administrator)
+  );
+}
+
+export async function handleTicketClaimButton(interaction: ButtonInteraction): Promise<void> {
   const guild = interaction.guild;
-  if (!textChannel || !guild) return;
+  const channel = interaction.channel;
 
-  const state = loadRuntimeState();
-  const ticket = state.tickets[textChannel.id];
-  if (!ticket) {
-    await interaction.reply({ content: 'Nao encontrei o estado desse ticket.', ephemeral: true });
+  if (!guild || !channel || channel.type !== ChannelType.GuildText) {
+    await interaction.reply({
+      content: 'Este comando só pode ser utilizado em um canal de ticket.',
+      flags: MessageFlags.Ephemeral,
+    });
     return;
   }
 
-  if (interaction.customId.endsWith(':accept')) {
-    const voiceChannel = await guild.channels.create({
-      name: normalizeChannelName(`call-${textChannel.name}`),
-      type: ChannelType.GuildVoice,
-      permissionOverwrites: ticketOverwrites(interaction, ticket.ownerId),
-    });
+  const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+  const isStaff =
+    member?.roles.cache.has(BOT_CONFIG.roles.staff) ||
+    member?.permissions.has(PermissionFlagsBits.ManageChannels) ||
+    member?.permissions.has(PermissionFlagsBits.Administrator);
 
-    ticket.callStatus = 'accepted';
-    ticket.voiceChannelId = voiceChannel.id;
-    saveRuntimeState(state);
-
-    await interaction.update({
+  if (!isStaff) {
+    await interaction.reply({
       embeds: [
-        buildTerminalEmbed({
-          command: 'ticket.call.accept()',
-          title: 'Call aceita',
-          description: `Canal de voz criado: ${voiceChannel}`,
-        }),
+        createStudioEmbed('warning')
+          .setTitle('Ação Restrita à Equipe')
+          .setDescription(`> ${em('knight')} Apenas membros da equipe **LWX Lab** podem assumir o atendimento.`),
       ],
-      components: [],
+      files: collectBrandFiles(['emblem']),
+      flags: MessageFlags.Ephemeral,
     });
-    await textChannel.send(`<@${ticket.ownerId}> sua call foi aceita: ${voiceChannel}`);
     return;
   }
 
-  ticket.callStatus = 'declined';
-  ticket.mode = 'text';
-  saveRuntimeState(state);
+  const claimEmbed = createStudioEmbed('secondary')
+    .setTitle('Atendimento Assumido • Direção de Arte')
+    .setDescription(
+      [
+        `> ${em('crown')} O designer ${interaction.user} assumiu a condução deste projeto!`,
+        '> Aguarde a análise do seu briefing e o alinhamento dos próximos passos.',
+      ].join('\n'),
+    );
 
-  await interaction.update({
-    embeds: [
-      buildTerminalEmbed({
-        command: 'ticket.call.decline()',
-        title: 'Call indisponivel',
-        description: 'Atendimento por call esta em manutencao no momento. O ticket seguira por texto.',
-      }),
-    ],
-    components: [],
+  await interaction.reply({
+    embeds: [claimEmbed],
+    files: collectBrandFiles(['emblem']),
   });
-  await textChannel.send(`<@${ticket.ownerId}> a opcao de call esta em manutencao agora. Vamos seguir por texto aqui no ticket.`);
 }
 
-export async function handleTicketClaim(interaction: ButtonInteraction) {
-  if (!hasSupportRole(interaction)) {
-    await interaction.reply({ content: 'Apenas Support pode assumir tickets.', ephemeral: true });
+export async function handleTicketCloseButton(interaction: ButtonInteraction): Promise<void> {
+  const guild = interaction.guild;
+  const channel = interaction.channel;
+
+  if (!guild || !channel || channel.type !== ChannelType.GuildText) {
+    await interaction.reply({
+      content: 'Este botão só pode ser utilizado dentro de um canal de orçamento.',
+      flags: MessageFlags.Ephemeral,
+    });
     return;
   }
 
-  const textChannel = interaction.channel as TextChannel | null;
-  if (!textChannel) return;
+  const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+  const allowed = canCloseTicket(member, channel.topic, interaction.user.id);
 
-  const state = loadRuntimeState();
-  const ticket = state.tickets[textChannel.id];
-  if (!ticket) {
-    await interaction.reply({ content: 'Nao encontrei o estado desse ticket.', ephemeral: true });
+  if (!allowed) {
+    await interaction.reply({
+      content: 'Apenas o autor do orçamento ou a equipe pode encerrar este ticket.',
+      flags: MessageFlags.Ephemeral,
+    });
     return;
   }
 
-  const displayName = 'displayName' in interaction.member! ? interaction.member.displayName : interaction.user.username;
-  const shortName = shortenStaffName(displayName);
-  ticket.assigneeId = interaction.user.id;
-  ticket.assigneeName = displayName;
-  saveRuntimeState(state);
+  const closingEmbed = createStudioEmbed('scarf')
+    .setTitle('Atendimento Finalizado • LWX Lab')
+    .setDescription(
+      [
+        `> ${em('verify')} Canal encerrado por ${interaction.user}.`,
+        `> Ficou satisfeito com seu projeto? Deixe sua avaliação abaixo ou em <#${BOT_CONFIG.channels.reviewPrompt}>!`,
+        '-# Este canal será arquivado em 5 segundos.',
+      ].join('\n'),
+    );
 
-  await interaction.update({ components: [buildTicketClaimRow(shortName)] });
+  await interaction.reply({
+    embeds: [closingEmbed],
+    files: collectBrandFiles(['emblem']),
+    components: [createReviewPromptButtonRow()],
+  });
 
   setTimeout(() => {
-    textChannel
-      .send({
-        embeds: [
-          buildTerminalEmbed({
-            command: 'ticket.staff.finish()',
-            title: 'Atendimento assumido',
-            description: `Responsavel: <@${interaction.user.id}>. Quando terminar, finalize para pedir a avaliacao do cliente.`,
-          }),
-        ],
-        components: [buildTicketFinishRow()],
-      })
-      .catch(() => undefined);
-  }, 3000);
-}
-
-export async function handleTicketFinish(interaction: ButtonInteraction) {
-  if (!hasSupportRole(interaction)) {
-    await interaction.reply({ content: 'Apenas Support pode finalizar tickets.', ephemeral: true });
-    return;
-  }
-
-  const textChannel = interaction.channel as TextChannel | null;
-  if (!textChannel) return;
-
-  const state = loadRuntimeState();
-  const ticket = state.tickets[textChannel.id];
-  if (!ticket) {
-    await interaction.reply({ content: 'Nao encontrei o estado desse ticket.', ephemeral: true });
-    return;
-  }
-
-  ticket.status = 'awaiting_review';
-  saveRuntimeState(state);
-
-  await interaction.reply({ content: 'Avaliacao enviada para o cliente. O ticket fecha depois do feedback.', ephemeral: true });
-  await textChannel.send({
-    content: `<@${ticket.ownerId}> antes de fechar, avalie como foi o atendimento.`,
-    ...buildReviewRatingPayload(0, 'ticket'),
-  });
-}
-
-export async function handleTicketClose(interaction: ButtonInteraction) {
-  const channel = interaction.channel as TextChannel | null;
-  await interaction.reply('Ticket fechado. O canal sera removido em alguns segundos.');
-
-  if (channel) {
-    const state = loadRuntimeState();
-    const ticket = state.tickets[channel.id];
-    if (ticket) ticket.status = 'closed';
-    saveRuntimeState(state);
-    setTimeout(() => channel.delete().catch(() => undefined), TIMING.ticketCloseMs);
-  }
+    void channel.delete(`Ticket encerrado por ${interaction.user.tag}`).catch(() => undefined);
+  }, 5000);
 }

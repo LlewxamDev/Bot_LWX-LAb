@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: lwx-lab-bot
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DISCORD_CLIENT_ID
+        value: "1493072348868251758"
+      - key: DISCORD_GUILD_ID
+        value: "1441608284061569209"
+      - key: DISCORD_TOKEN
+        sync: false

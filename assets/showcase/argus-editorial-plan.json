@@ -1,0 +1,186 @@
+{
+  "project_id": "lwx-lab-bot-tech-showcase-v2",
+  "engine": "ARGUS Professional AI Video Editing Intelligence v2.0",
+  "created_at": "2026-10-20T21:36:00-03:00",
+  "creative_direction": {
+    "objective": "Apresentar exclusivamente as funcionalidades, comandos interativos, novas tecnologias, motor de IA (Silia AI) e automacao de canais do bot LWX Lab com motion design 3D inspirado em animacoes de camera nula (Mob editzx / After Effects / Alight Motion).",
+    "target_audience": "Comunidades de Discord, servidores profissionais e clientes buscando automacao avanacada de atendimento, IA e gestao de pedidos.",
+    "genre": "3D UI Motion Graphics & Kinetic Tech Showcase",
+    "visual_language": "Perspectiva 3D real com matriz homografica (Camera Yaw/Pitch/Roll/FOV/Z-Dolly), curvas de velocidade S-Curve (Ease-In-Out Expo), tipografia cinetica com mascara de recorte, iluminacao volumetrica discreta e profundidade de camadas (Z-Parallax).",
+    "reference_inspiration": {
+      "source": "https://youtu.be/EArq_VYBsos (@mob.editzx - Criando efeitos visuais totalmente do zero)",
+      "extracted_principles": [
+        "Movimentacao continua de camera 3D guiada por Null Object com aceleracao e desaceleracao acentuadas (Velocity Graph S-Curve)",
+        "Rotacao 3D de planos de interface (UI Cards & Smartphone 3D) acompanhando o foco de leitura",
+        "Tipografia cinetica limpa com barras de contraste e revelacao por mascara",
+        "Transicoes motivadas pelo movimento espacial da camera (Match-Cut direcional no eixo Y/Z) em vez de fades genericos"
+      ],
+      "do_not_imitate": [
+        "Interface de tutorial de aplicativo mobile",
+        "Shakes excessivos de AMV ou flashes brancos repetitivos",
+        "Qualquer mencao ao estilo visual de desenho do autor ou cores de personagem"
+      ]
+    },
+    "strict_copy_constraints": {
+      "focus_only_on": [
+        "Funcionalidades do Bot",
+        "Comandos e Botoes Interativos",
+        "Novas Tecnologias (Silia AI LLM Realtime, Topicos Privados, Rastreador 5 Etapas, Simulador Combo 10% OFF, Auto-Clean de Canais)"
+      ],
+      "forbidden_terms": [
+        "meu estilo visual",
+        "estilo visual do bot",
+        "cavaleiro",
+        "fogo azul",
+        "cachecol",
+        "cores da logo",
+        "llewxam"
+      ]
+    }
+  },
+  "style_profile": {
+    "resolution": [1280, 720],
+    "fps": 30,
+    "duration_sec": 28.0,
+    "total_frames": 840,
+    "anti_ai_slop_rules": {
+      "max_flashes_per_30s": 0,
+      "max_unmotivated_shakes": 0,
+      "beat_sync_every_cut": false,
+      "min_hold_frames_on_key_response": 30,
+      "max_concurrent_focal_groups": 2,
+      "require_3d_camera_continuity": true,
+      "require_effect_justification": true
+    }
+  },
+  "scenes": [
+    {
+      "scene_id": "scene_01_3d_mobile_discord",
+      "title": "Sequencia 3D Smartphone Discord — Mensagens em Angulos Dinamicos & Resposta do Bot",
+      "start_sec": 0.0,
+      "end_sec": 8.5,
+      "start_frame": 0,
+      "end_frame": 255,
+      "camera_choreography": [
+        {
+          "subshot": "1A_angle_left_message_1",
+          "time_range": [0.0, 2.8],
+          "camera_pose": { "yaw_deg": 26.0, "pitch_deg": -15.0, "roll_deg": -5.0, "zoom": 1.22, "pan_y": -90 },
+          "action": "Camera acompanha de um angulo 3D lateral superior o usuario digitando e enviando a primeira mensagem no celular; o balao de mensagem salta em 3D (Z-Parallax).",
+          "editorial_justification": "Introduz o problema real do usuario com imersao espacial imediata (Regra #1 e #6)."
+        },
+        {
+          "subshot": "1B_camera_down_opposite_angle_message_2",
+          "time_range": [2.8, 5.4],
+          "camera_pose": { "yaw_deg": -25.0, "pitch_deg": -12.0, "roll_deg": 5.0, "zoom": 1.24, "pan_y": 35 },
+          "action": "Camera desce suavemente pelo celular e gira para o angulo 3D oposto enquanto o usuario aciona o comando [Aprimorar Ideia com Silia AI] e envia a segunda mensagem.",
+          "editorial_justification": "Mudanca de eixo 3D acompanha o fluxo vertical da conversa no Discord Mobile e destaca o acionamento do comando."
+        },
+        {
+          "subshot": "1C_bot_response_straighten_and_dive_down",
+          "time_range": [5.4, 8.5],
+          "camera_pose": { "yaw_deg": 0.0, "pitch_deg": 0.0, "roll_deg": 0.0, "zoom": 1.08, "pan_y_end": 780 },
+          "action": "A resposta completa do Bot (Embed Interativa + Briefing + Ticket) aparece; a camera fica 100% reta (0 graus) para leitura clara e depois desce em alta velocidade (Whip-Pan Y) para revelar o restante do video.",
+          "editorial_justification": "Preserva pausa de leitura (Regra #4) ao alinhar a camera de frente antes da transicao direcional para baixo (Regra #6)."
+        }
+      ],
+      "on_screen_copy": [
+        "INTERACAO EM TEMPO REAL",
+        "1. Solicite suporte ou acione comandos com 1 toque",
+        "2. Ative [Aprimorar Ideia com Silia AI]",
+        "3. Resposta instantanea com Briefing + Ticket"
+      ]
+    },
+    {
+      "scene_id": "scene_02_kinetic_channel_automation",
+      "title": "Tipografia Cinetica & Automacao de Canais (Zero Comandos /)",
+      "start_sec": 8.5,
+      "end_sec": 13.5,
+      "start_frame": 255,
+      "end_frame": 405,
+      "camera_choreography": [
+        {
+          "subshot": "2A_whip_entry_and_3d_channel_grid",
+          "time_range": [8.5, 13.5],
+          "camera_pose": { "yaw_deg": -14.0, "pitch_deg": 8.0, "roll_deg": -2.0, "zoom": 1.05, "pan_y": 0 },
+          "action": "Continua o movimento descendente da camera vindo do celular para revelar a tipografia cinetica em mascara e os 8 paineis autonomos em perspectiva 3D com desbloqueio em cascata.",
+          "editorial_justification": "Match-cut direcional vertical garante continuidade espacial perfeita (Regra #6)."
+        }
+      ],
+      "on_screen_copy": [
+        "ARQUITETURA 100% AUTONOMA • ZERO COMANDOS /",
+        "GATEWAY DE CREDENCIAL (#registre-se) COM BLOQUEIO AUTOMATICO",
+        "AUTO-CLEAN ENGINE: MENSAGEM UNICA FIXADA EM CADA CANAL",
+        "8 PAINEIS DEDICADOS SINCRONIZADOS VIA DISCORD.JS V14"
+      ]
+    },
+    {
+      "scene_id": "scene_03_portfolio_and_combo_engine",
+      "title": "Motor de Vitrine Interativa & Simulador Automatico de Combo (10% OFF)",
+      "start_sec": 13.5,
+      "end_sec": 18.5,
+      "start_frame": 405,
+      "end_frame": 555,
+      "camera_choreography": [
+        {
+          "subshot": "3A_3d_bento_tilt_systems",
+          "time_range": [13.5, 18.5],
+          "camera_pose": { "yaw_deg": 16.0, "pitch_deg": -9.0, "roll_deg": 2.0, "zoom": 1.06, "pan_y": 0 },
+          "action": "Planos Bento 3D flutuantes mostram o filtro de categorias em tempo real, menu de salto rapido e a calculadora automatica aplicando 10% OFF na selecao multipla.",
+          "editorial_justification": "Demonstra duas funcionalidades transacionais complementares lado a lado sem sobrecarga visual (Regra #5)."
+        }
+      ],
+      "on_screen_copy": [
+        "VITRINE INTERATIVA & CALCULADORA DE COMBOS",
+        "FILTROS POR CATEGORIA + SALTO RAPIDO + ENCOMENDA EM 1 CLIQUE",
+        "SIMULADOR AUTOMATICO DE PACOTES (10% OFF PROGRESSIVO)",
+        "CALCULO INSTANTANEO DE PRAZOS E ESCOPO TECNICO"
+      ]
+    },
+    {
+      "scene_id": "scene_04_silia_ai_llm_engine",
+      "title": "Silia AI — Motor LLM em Tempo Real & Topicos Privados",
+      "start_sec": 18.5,
+      "end_sec": 23.5,
+      "start_frame": 555,
+      "end_frame": 705,
+      "camera_choreography": [
+        {
+          "subshot": "4A_3d_layered_ai_pipeline",
+          "time_range": [18.5, 23.5],
+          "camera_pose": { "yaw_deg": -15.0, "pitch_deg": -8.0, "roll_deg": -2.0, "zoom": 1.08, "pan_y": 0 },
+          "action": "Camadas 3D em paralaxe exibem os 2 comandos da Silia AI (Conversar / Aprimorar Ideia), a criacao automatica da thread privada e o pre-preenchimento do modal de orcamento.",
+          "editorial_justification": "Explica visualmente a arquitetura tecnica da IA e sua integracao direta com o sistema de tickets."
+        }
+      ],
+      "on_screen_copy": [
+        "SILIA AI • MOTOR LLM INTEGRADO EM TEMPO REAL",
+        "MODO 1: CONVERSAR COM A SILIA AI (ATENDIMENTO & DUVIDAS)",
+        "MODO 2: APRIMORAR IDEIA (ESTRUTURACAO DE BRIEFING TECNICO)",
+        "TOPICOS PRIVADOS AUTOMATICOS + EXPORTACAO DIRETA PRO TICKET"
+      ]
+    },
+    {
+      "scene_id": "scene_05_order_tracker_and_finale",
+      "title": "Rastreador de Pedidos em 5 Etapas, Gerador HEX & Fechamento Cinetico",
+      "start_sec": 23.5,
+      "end_sec": 28.0,
+      "start_frame": 705,
+      "end_frame": 840,
+      "camera_choreography": [
+        {
+          "subshot": "5A_tracker_to_kinetic_lockup",
+          "time_range": [23.5, 28.0],
+          "camera_pose": { "yaw_deg": 0.0, "pitch_deg": 0.0, "roll_deg": 0.0, "zoom": 1.0, "pan_y": 0 },
+          "action": "Camera estabiliza no centro exibindo a barra de rastreamento animada de 20% a 100% (#LWX-101), gerador de paletas HEX, mural de avaliacoes 5 estrelas e assinatura tecnologica final.",
+          "editorial_justification": "Fechamento estavel e legivel consolidando todas as tecnologias apresentadas (Regra #4 e #10)."
+        }
+      ],
+      "on_screen_copy": [
+        "RASTREAMENTO EM 5 ETAPAS • GERADOR HEX • AVALIACOES 5★",
+        "TRACKER #LWX-101: BRIEFING -> ESBOCO -> RENDER -> REVISAO -> ENTREGA (100%)",
+        "LWX LAB BOT • ECOSSISTEMA COMPLETO DE AUTOMACAO & IA NO DISCORD"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "OTIO_SCHEMA": "Timeline.1",
+  "metadata": {
+    "generator": "ARGUS Video Director v2.0",
+    "editorial_plan_ref": "argus-editorial-plan.json",
+    "non_destructive": true,
+    "reversible_operation_log": [
+      { "op_id": "op_001", "action": "create_track", "track": "V1_3D_Perspective_Stage", "reversible": true },
+      { "op_id": "op_002", "action": "insert_3d_phone_sequence", "frames": [0, 255], "camera_keyframes": ["yaw:+26,pitch:-15", "yaw:-25,pitch:-12", "yaw:0,pitch:0,pan_y:+780"], "reversible": true },
+      { "op_id": "op_003", "action": "insert_kinetic_channel_automation", "frames": [255, 405], "reversible": true },
+      { "op_id": "op_004", "action": "insert_portfolio_and_combo_engine", "frames": [405, 555], "reversible": true },
+      { "op_id": "op_005", "action": "insert_silia_ai_llm_architecture", "frames": [555, 705], "reversible": true },
+      { "op_id": "op_006", "action": "insert_order_tracker_and_finale", "frames": [705, 840], "reversible": true }
+    ]
+  },
+  "name": "LWX_Lab_Bot_Tech_Showcase_v2",
+  "global_start_time": {
+    "OTIO_SCHEMA": "RationalTime.1",
+    "rate": 30.0,
+    "value": 0.0
+  },
+  "tracks": {
+    "OTIO_SCHEMA": "Stack.1",
+    "children": [
+      {
+        "OTIO_SCHEMA": "Track.1",
+        "name": "V1_3D_Perspective_Stage",
+        "kind": "Video",
+        "children": [
+          {
+            "OTIO_SCHEMA": "Clip.1",
+            "name": "Scene_01_3D_Mobile_Discord_Angles",
+            "source_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "start_time": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 0.0 },
+              "duration": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 255.0 }
+            }
+          },
+          {
+            "OTIO_SCHEMA": "Clip.1",
+            "name": "Scene_02_Autonomous_Channels_Zero_Slash",
+            "source_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "start_time": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 255.0 },
+              "duration": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 150.0 }
+            }
+          },
+          {
+            "OTIO_SCHEMA": "Clip.1",
+            "name": "Scene_03_Interactive_Portfolio_Combo_Simulator",
+            "source_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "start_time": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 405.0 },
+              "duration": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 150.0 }
+            }
+          },
+          {
+            "OTIO_SCHEMA": "Clip.1",
+            "name": "Scene_04_Silia_AI_Realtime_LLM_Engine",
+            "source_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "start_time": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 555.0 },
+              "duration": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 150.0 }
+            }
+          },
+          {
+            "OTIO_SCHEMA": "Clip.1",
+            "name": "Scene_05_Live_Order_Tracker_5_Stages_Finale",
+            "source_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "start_time": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 705.0 },
+              "duration": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 135.0 }
+            }
+          }
+        ]
+      },
+      {
+        "OTIO_SCHEMA": "Track.1",
+        "name": "A1_Master_Stereo_Mix",
+        "kind": "Audio",
+        "children": [
+          {
+            "OTIO_SCHEMA": "Clip.1",
+            "name": "LWX_Tech_Soundtrack_And_Motivated_SFX",
+            "media_reference": {
+              "OTIO_SCHEMA": "ExternalReference.1",
+              "target_url": "file:///c:/Users/Evandro/Downloads/LWX-Lab/assets/showcase/lwx-lab-soundtrack.wav"
+            },
+            "source_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "start_time": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 0.0 },
+              "duration": { "OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 840.0 }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

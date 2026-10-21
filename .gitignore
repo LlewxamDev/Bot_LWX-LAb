@@ -7,3 +7,6 @@ dist/
 coverage/
 .DS_Store
 .superpowers/
+.mcp.json
+assets/showcase/*.mp4
+assets/showcase/*.wav

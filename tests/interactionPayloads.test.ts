@@ -1,92 +1,56 @@
 import { describe, expect, it } from 'vitest';
-import { buildPortfolioBrowserPayload } from '../src/systems/portfolio';
-import { getPanelDefinitions } from '../src/systems/panels';
-import { buildPricingBrowserPayload } from '../src/systems/pricing';
-import { buildTicketModePayload, buildTicketOverwriteTargets, createTicketState, shortenStaffName } from '../src/systems/tickets';
-import { createDefaultRuntimeState } from '../src/storage/runtimeStore';
+import { buildOrderCardEmbed } from '../src/systems/orders.js';
+import { buildPaletteGeneratorMessage } from '../src/systems/palette.js';
+import { buildPortfolioViewState } from '../src/systems/portfolio.js';
+import { buildPricingComboEmbed, buildPricingDetailEmbed, getServiceById } from '../src/systems/pricing.js';
+import { sanitizeTicketChannelName } from '../src/systems/tickets.js';
 
-describe('runtime and panel definitions', () => {
-  it('starts with empty panel and ticket state', () => {
-    expect(createDefaultRuntimeState()).toEqual({ panels: {}, tickets: {} });
+describe('Interactive Systems: Portfolio, Pricing Combo, Palette & Order Tracker', () => {
+  it('builds unframed portfolio view states for each category', () => {
+    const state = buildPortfolioViewState('banners', 0);
+    expect(state.currentItem?.id).toBe('design-03');
+    expect(state.embed.toJSON().image?.url).toBe('attachment://design-03.jpg');
+    expect(state.components.length).toBe(3);
   });
 
-  it('defines all fixed channel panels', () => {
-    expect(getPanelDefinitions().map((panel) => panel.key)).toEqual([
-      'register',
-      'portfolio',
-      'pricing',
-      'reviewPrompt',
-      'budget',
-    ]);
-  });
-});
+  it('calculates 10% combo discount when 2 or more services are selected', () => {
+    const single = buildPricingComboEmbed(['banner']).toJSON();
+    expect(single.description).not.toContain('Bônus de Pacote Ativo');
 
-describe('private browser payloads', () => {
-  it('builds a portfolio payload for image categories', () => {
-    const payload = buildPortfolioBrowserPayload('banners', 0);
-
-    expect(payload.embeds[0]!.toJSON().title).toBe('> query portfolio --category=banners');
-    expect(payload.files?.[0]).toContain('assets/portfolio/');
-    expect(payload.components.length).toBeGreaterThanOrEqual(2);
+    const combo = buildPricingComboEmbed(['banner', 'logo']).toJSON();
+    expect(combo.description).toContain('Bônus de Pacote Ativo');
   });
 
-  it('builds a site portfolio payload from GitHub projects', () => {
-    const payload = buildPortfolioBrowserPayload('sites', 0);
-    const json = payload.embeds[0]!.toJSON();
-
-    expect(json.description).toContain('em producao');
-    expect(json.fields).toBeUndefined();
-    expect(payload.files).toBeUndefined();
+  it('builds service detail embeds cleanly', () => {
+    const logo = getServiceById('logo');
+    const embed = buildPricingDetailEmbed(logo).toJSON();
+    expect(embed.title).toContain(logo.name);
   });
 
-  it('builds empty production state for UI/UX while it has no exact asset', () => {
-    const payload = buildPortfolioBrowserPayload('uiux', 0);
-    const json = payload.embeds[0]!.toJSON();
-
-    expect(json.description).toContain('em producao');
-    expect(payload.files).toBeUndefined();
+  it('generates live palette card buffer and embed', () => {
+    const pal = buildPaletteGeneratorMessage(0);
+    expect(pal.palette.id).toBe('knight_glitch');
+    expect(pal.files.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('builds a pricing payload with ticket action', () => {
-    const payload = buildPricingBrowserPayload('logo');
+  it('builds visual order tracker card with progress bar', () => {
+    const card = buildOrderCardEmbed({
+      id: 'LWX-101',
+      clientId: '12345',
+      clientTag: 'Cliente#0001',
+      service: 'Banner HD',
+      deadline: '48h',
+      stage: 'render',
+      note: 'Aplicando iluminação azul e hachuras.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }).toJSON();
 
-    expect(payload.embeds[0]!.toJSON().title).toBe('> inspect price --service=logo');
-    expect(payload.components.length).toBe(2);
-  });
-});
-
-describe('ticket payload helpers', () => {
-  it('builds text/call chooser controls for a selected service', () => {
-    const payload = buildTicketModePayload('bot_discord');
-    const buttons = payload.components[0]!.toJSON().components;
-
-    expect(buttons.map((button: any) => button.custom_id)).toEqual([
-      'ticket:mode:text:bot_discord',
-      'ticket:mode:call:bot_discord',
-    ]);
+    expect(card.title).toContain('#LWX-101');
+    expect(card.description).toContain('60%');
   });
 
-  it('shortens staff names for claimed ticket buttons', () => {
-    expect(shortenStaffName('SuporteLWXGrandeDemais')).toBe('SuporteLWXGran...');
-    expect(shortenStaffName('Llew')).toBe('Llew');
-  });
-
-  it('creates ticket state with service, mode and call status', () => {
-    expect(createTicketState('123', 'bot_whatsapp', 'call')).toMatchObject({
-      ownerId: '123',
-      serviceId: 'bot_whatsapp',
-      mode: 'call',
-      callStatus: 'pending',
-      status: 'open',
-    });
-  });
-
-  it('builds ticket permission targets around the owner instead of the staff clicker', () => {
-    expect(buildTicketOverwriteTargets('client-123', 'bot-456', 'everyone-789')).toEqual({
-      everyoneId: 'everyone-789',
-      ownerId: 'client-123',
-      botId: 'bot-456',
-      supportRoleId: '1441752196797435944',
-    });
+  it('sanitizes ticket channel names', () => {
+    expect(sanitizeTicketChannelName('Llewxam Dev!', '123456789')).toBe('pedido-llewxam-dev-6789');
   });
 });

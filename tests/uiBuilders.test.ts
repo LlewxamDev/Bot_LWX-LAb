@@ -1,75 +1,98 @@
 import { describe, expect, it } from 'vitest';
-import { data as aiCommandData } from '../src/commands/ai';
-import { buildPublicReviewPayload } from '../src/systems/reviews';
-import { buildPortfolioCategorySelect, buildStarButtons, buildTicketClaimRow, buildTicketModeButtons } from '../src/ui/components';
-import { buildTerminalEmbed, renderStars } from '../src/ui/embeds';
-import { buildBudgetPanel, buildPortfolioPanel, buildPricingPanel, buildRegistrationPanel } from '../src/ui/panels';
+import { buildPublishedReviewEmbed, formatStars } from '../src/systems/reviews.js';
+import {
+  createBudgetButtonRow,
+  createBudgetUtilityRow,
+  createPortfolioEntryButtonRow,
+  createPricingEntryButtonRow,
+  createRegisterButtonRow,
+  createReviewPromptButtonRow,
+  createRulesButtonRow,
+  createSiliaPanelButtonRow,
+} from '../src/ui/components.js';
+import { buildProgressBar, createSiliaEmbed, createStudioEmbed } from '../src/ui/embeds.js';
+import {
+  buildBudgetPanelMessage,
+  buildPortfolioPanelMessage,
+  buildPricingPanelMessage,
+  buildRegisterPanelMessage,
+  buildReviewPromptPanelMessage,
+  buildRulesPanelMessage,
+  buildSiliaPanelMessage,
+  buildWelcomeFixedPanelMessage,
+} from '../src/ui/panels.js';
 
-describe('Terminal Lab UI builders', () => {
-  it('builds red terminal embeds', () => {
-    const json = buildTerminalEmbed({
-      command: 'lwx.test()',
-      title: 'Teste',
-      description: 'Descricao',
+describe('Knight-Style Luxury UI Builders & Animated GIF Panels', () => {
+  it('creates clean studio and Silia AI embeds without terminal ansi blocks', () => {
+    const json = createStudioEmbed('primary').setTitle('Teste').toJSON();
+    expect(json.color).toBe(0x8B5CF6);
+    expect(json.author?.name).toContain('LWX Lab');
+    expect(json.description ?? '').not.toContain('```ansi');
+
+    const siliaJson = createSiliaEmbed('primary').setTitle('Silia').toJSON();
+    expect(siliaJson.author?.name).toContain('Silia AI');
+    expect(siliaJson.thumbnail?.url).toBe('attachment://silia-emblem.gif');
+  });
+
+  it('builds Double-Embed fixed panels with animated GIF banners and divider for all channels', () => {
+    const portfolioPanel = buildPortfolioPanelMessage();
+    expect(portfolioPanel.embeds.length).toBe(2);
+    expect(portfolioPanel.embeds[0]?.toJSON().image?.url).toBe('attachment://banner-portfolio.gif');
+    expect(portfolioPanel.embeds[1]?.toJSON().image?.url).toBe('attachment://divider-glitch.gif');
+
+    const registerPanel = buildRegisterPanelMessage();
+    expect(registerPanel.embeds.length).toBe(2);
+    expect(registerPanel.embeds[0]?.toJSON().image?.url).toBe('attachment://banner-register.gif');
+
+    const pricingPanel = buildPricingPanelMessage();
+    expect(pricingPanel.embeds.length).toBe(2);
+    expect(pricingPanel.embeds[0]?.toJSON().image?.url).toBe('attachment://banner-pricing.gif');
+
+    const budgetPanel = buildBudgetPanelMessage();
+    expect(budgetPanel.embeds.length).toBe(2);
+    expect(budgetPanel.components.length).toBe(2);
+
+    const reviewPanel = buildReviewPromptPanelMessage();
+    expect(reviewPanel.embeds.length).toBe(2);
+
+    const rulesPanel = buildRulesPanelMessage();
+    expect(rulesPanel.embeds.length).toBe(2);
+    expect(rulesPanel.components.length).toBe(1);
+
+    const welcomePanel = buildWelcomeFixedPanelMessage();
+    expect(welcomePanel.embeds.length).toBe(2);
+    expect(welcomePanel.embeds[0]?.toJSON().image?.url).toBe('attachment://banner-welcome.gif');
+
+    const siliaPanel = buildSiliaPanelMessage();
+    expect(siliaPanel.embeds.length).toBe(2);
+    expect(siliaPanel.embeds[0]?.toJSON().image?.url).toBe('attachment://banner-silia.gif');
+    expect(siliaPanel.embeds[1]?.toJSON().thumbnail?.url).toBe('attachment://silia-emblem.gif');
+  });
+
+  it('builds multi-button action bars for all studio panels including Silia AI and Rules', () => {
+    expect(createRegisterButtonRow().components.length).toBe(4);
+    expect(createPortfolioEntryButtonRow().components.length).toBe(4);
+    expect(createPricingEntryButtonRow().components.length).toBe(3);
+    expect(createBudgetButtonRow().components.length).toBe(4);
+    expect(createBudgetUtilityRow().components.length).toBe(4);
+    expect(createReviewPromptButtonRow().components.length).toBe(4);
+    expect(createRulesButtonRow().components.length).toBe(4);
+    expect(createSiliaPanelButtonRow().components.length).toBe(2);
+  });
+
+  it('renders star ratings and progress bars cleanly', () => {
+    expect(formatStars(5)).toContain('⭐⭐⭐⭐⭐');
+    expect(buildProgressBar(3, 5, 10)).toContain('60%');
+  });
+
+  it('builds published review embed without terminal codeblocks', () => {
+    const embed = buildPublishedReviewEmbed('Cliente#0001', '123456', null, {
+      stars: 5,
+      service: 'Banner HD',
+      comment: 'Arte incrível e entrega super rápida!',
     }).toJSON();
 
-    expect(json.color).toBe(0xff243d);
-    expect(json.title).toBe('> lwx.test()');
-    expect(json.description).toContain('**Teste**');
-  });
-
-  it('renders filled and empty stars', () => {
-    expect(renderStars(3)).toBe('★ ★ ★ ☆ ☆');
-    expect(renderStars(5)).toBe('★ ★ ★ ★ ★');
-  });
-
-  it('builds portfolio and star controls with stable custom ids', () => {
-    const portfolioRow = buildPortfolioCategorySelect('all').toJSON();
-    const starRow = buildStarButtons(3).toJSON();
-
-    expect(portfolioRow.components[0]!.custom_id).toBe('portfolio:category');
-    expect(starRow.components.map((button) => (button as any).custom_id)).toEqual([
-      'review:rate:1',
-      'review:rate:2',
-      'review:rate:3',
-      'review:rate:4',
-      'review:rate:5',
-    ]);
-  });
-
-  it('builds fixed panel payloads', () => {
-    expect(buildPortfolioPanel().embeds[0]!.toJSON().title).toBe('> lwx.portfolio.open()');
-    expect(buildRegistrationPanel().embeds[0]!.toJSON().title).toBe('> lwx.register.start()');
-    expect((buildBudgetPanel().components[0]!.toJSON().components[0]! as any).custom_id).toBe('ticket:start:custom');
-    expect(buildPricingPanel().components.length).toBeGreaterThan(0);
-  });
-
-  it('builds ticket mode and claim controls', () => {
-    const modeRow = buildTicketModeButtons('site_complete').toJSON();
-    const claimRow = buildTicketClaimRow('SuporteLWXGrandeDemais').toJSON();
-
-    expect(modeRow.components.map((button: any) => button.custom_id)).toEqual([
-      'ticket:mode:text:site_complete',
-      'ticket:mode:call:site_complete',
-    ]);
-    expect((claimRow.components[0]! as any).label).toContain('SuporteLWXGran...');
-    expect((claimRow.components[0]! as any).disabled).toBe(true);
-  });
-});
-
-describe('reviews and AI command', () => {
-  it('builds public review payload with italic feedback', () => {
-    const payload = buildPublicReviewPayload('123', 4, 'Atendimento muito bom');
-    const json = payload.embeds[0]!.toJSON();
-
-    expect(json.description).toContain('★ ★ ★ ★ ☆');
-    expect(json.description).toContain('*Atendimento muito bom*');
-  });
-
-  it('defines /ia as the only intended slash command', () => {
-    const json = aiCommandData.toJSON();
-
-    expect(json.name).toBe('ia');
-    expect(json.options?.[0]!.name).toBe('mensagem');
+    expect(embed.description).toContain('Arte incrível e entrega super rápida!');
+    expect(embed.description).not.toContain('```');
   });
 });

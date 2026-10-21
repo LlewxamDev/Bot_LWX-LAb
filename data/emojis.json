@@ -1,0 +1,47 @@
+{
+  "flame": {
+    "id": "1562049658157801514",
+    "name": "lwx_flame",
+    "animated": true
+  },
+  "knight": {
+    "id": "1562049661504851998",
+    "name": "lwx_knight",
+    "animated": true
+  },
+  "glitch": {
+    "id": "1562049664746782731",
+    "name": "lwx_glitch",
+    "animated": true
+  },
+  "crown": {
+    "id": "1562049666785214515",
+    "name": "lwx_crown",
+    "animated": true
+  },
+  "spark": {
+    "id": "1562049669402599444",
+    "name": "lwx_spark",
+    "animated": true
+  },
+  "palette": {
+    "id": "1562049671961124944",
+    "name": "lwx_palette",
+    "animated": true
+  },
+  "ticket": {
+    "id": "1562049674716647454",
+    "name": "lwx_ticket",
+    "animated": true
+  },
+  "verify": {
+    "id": "1562049676591628318",
+    "name": "lwx_verify",
+    "animated": true
+  },
+  "silia": {
+    "id": "1562178794251358208",
+    "name": "lwx_silia",
+    "animated": true
+  }
+}
