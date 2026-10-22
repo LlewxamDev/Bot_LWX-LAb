@@ -460,37 +460,56 @@ client.on(Events.MessageCreate, async (message) => {
 
 import { createServer } from 'node:http';
 
+const debugLogs: string[] = [];
+let lastLoginError: string | null = null;
+
+function pushLog(msg: string): void {
+  const entry = `${new Date().toISOString().slice(11, 19)} ${msg}`;
+  debugLogs.push(entry);
+  if (debugLogs.length > 25) {
+    debugLogs.shift();
+  }
+}
+
+client.on('debug', (info) => {
+  if (
+    info.includes('429') ||
+    info.includes('Session') ||
+    info.includes('Gateway') ||
+    info.includes('Identify') ||
+    info.includes('Heartbeat') ||
+    info.includes('Connecting') ||
+    info.includes('Ready') ||
+    info.includes('close') ||
+    info.includes('destroy')
+  ) {
+    pushLog(`[WS] ${info.slice(0, 180)}`);
+  }
+});
+
+client.on('error', (err) => {
+  lastLoginError = err.message;
+  pushLog(`[ERR] ${err.message}`);
+});
+
+client.rest.on('rateLimited', (info) => {
+  pushLog(`[429] route=${info.route} retryAfter=${info.retryAfter}ms global=${info.global}`);
+});
+
 let isReconnecting = false;
-let disconnectedSince: number | null = null;
 
-async function ensureDiscordGatewayConnected(): Promise<void> {
-  if (client.isReady() && client.ws.status === 0) {
-    disconnectedSince = null;
+async function attemptLogin(source: string): Promise<void> {
+  if (isReconnecting || client.isReady()) {
     return;
   }
-
-  if (process.uptime() < 45 || isReconnecting) {
-    return;
-  }
-
-  if (disconnectedSince === null) {
-    disconnectedSince = Date.now();
-  }
-
-  // If disconnected for over 90s, force clean restart so Render respawns container
-  if (Date.now() - disconnectedSince > 90_000) {
-    console.error('⚠️ Gateway desconectado por mais de 90s. Reiniciando processo para auto-recuperação...');
-    process.exit(1);
-  }
-
   isReconnecting = true;
+  pushLog(`Login start (${source}), tokenLen=${env.DISCORD_TOKEN.length}`);
   try {
-    console.warn('🔄 Reconectando cliente Discord ao Gateway...');
-    await client.destroy().catch(() => undefined);
     await client.login(env.DISCORD_TOKEN);
-    disconnectedSince = null;
+    pushLog(`Login resolved (${source}), ready=${client.isReady()} ws=${client.ws.status}`);
   } catch (err) {
-    console.error('Erro ao reconectar ao Discord Gateway:', err);
+    lastLoginError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    pushLog(`Login error (${source}): ${lastLoginError}`);
   } finally {
     isReconnecting = false;
   }
@@ -499,9 +518,6 @@ async function ensureDiscordGatewayConnected(): Promise<void> {
 const healthPort = Number(process.env.PORT) || 10000;
 const healthServer = createServer((_req, res) => {
   const ready = client.isReady() && client.ws.status === 0;
-  if (!ready) {
-    void ensureDiscordGatewayConnected();
-  }
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(
@@ -512,6 +528,9 @@ const healthServer = createServer((_req, res) => {
       ping_ms: client.ws.ping,
       bot: client.user?.tag ?? 'LWX Lab',
       uptime_sec: Math.floor(process.uptime()),
+      token_len: env.DISCORD_TOKEN.length,
+      last_error: lastLoginError,
+      logs: debugLogs,
     }),
   );
 });
@@ -522,10 +541,12 @@ healthServer.listen(healthPort, '0.0.0.0', () => {
   console.log(`🌐 Healthcheck HTTP ativo em 0.0.0.0:${healthPort} (Render / Cron-Job ready)`);
 });
 
-// Watchdog every 45s to heal zombie WebSocket states after Render idle throttling
+// Watchdog every 3 minutes (only if completely idle/disconnected and not mid-login)
 setInterval(() => {
-  void ensureDiscordGatewayConnected();
-}, 45_000);
+  if (!client.isReady() && !isReconnecting && (client.ws.status === 3 || client.ws.status === 5)) {
+    void attemptLogin('watchdog');
+  }
+}, 180_000);
 
 // External keep-alive ping every 4 minutes to prevent Render 15-min idle spin-down
 const externalHealthUrl =
@@ -537,5 +558,6 @@ setInterval(() => {
   fetch(externalHealthUrl, { headers: { 'User-Agent': 'LWX-Lab-KeepAlive/2.0' } }).catch(() => undefined);
 }, 4 * 60 * 1000);
 
-void client.login(env.DISCORD_TOKEN);
+void attemptLogin('startup');
+
 
