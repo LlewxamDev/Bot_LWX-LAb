@@ -53,6 +53,7 @@ import { collectBrandFiles, createSiliaEmbed } from './ui/embeds.js';
 import { em, syncGuildCustomEmojis } from './ui/emojis.js';
 
 const env = getEnv();
+const discordApiBase = process.env.DISCORD_API_BASE?.trim() || 'https://www.llewxam.me/discord-api';
 
 const client = new Client({
   intents: [
@@ -61,6 +62,9 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
+  rest: {
+    api: discordApiBase,
+  },
 });
 
 /**
@@ -68,7 +72,7 @@ const client = new Client({
  * happen exclusively inside their dedicated channels via fixed panels.
  */
 async function clearAllSlashCommands(): Promise<void> {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);
+  const rest = new REST({ version: '10', api: discordApiBase }).setToken(env.DISCORD_TOKEN);
 
   await rest.put(Routes.applicationGuildCommands(env.DISCORD_CLIENT_ID, env.DISCORD_GUILD_ID), {
     body: [],
@@ -345,7 +349,7 @@ function startBotRichPresence(readyClient: Client<true>): void {
 }
 
 async function syncBotProfileCustomization(readyClient: Client<true>): Promise<void> {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);
+  const rest = new REST({ version: '10', api: discordApiBase }).setToken(env.DISCORD_TOKEN);
 
   const richAboutMe = [
     `${em('knight')} **LWX Lab • Estúdio Oficial por Llewxam**`,
