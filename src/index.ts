@@ -460,12 +460,56 @@ client.on(Events.MessageCreate, async (message) => {
 
 import { createServer } from 'node:http';
 
+let isReconnecting = false;
+let disconnectedSince: number | null = null;
+
+async function ensureDiscordGatewayConnected(): Promise<void> {
+  if (client.isReady() && client.ws.status === 0) {
+    disconnectedSince = null;
+    return;
+  }
+
+  if (process.uptime() < 45 || isReconnecting) {
+    return;
+  }
+
+  if (disconnectedSince === null) {
+    disconnectedSince = Date.now();
+  }
+
+  // If disconnected for over 90s, force clean restart so Render respawns container
+  if (Date.now() - disconnectedSince > 90_000) {
+    console.error('⚠️ Gateway desconectado por mais de 90s. Reiniciando processo para auto-recuperação...');
+    process.exit(1);
+  }
+
+  isReconnecting = true;
+  try {
+    console.warn('🔄 Reconectando cliente Discord ao Gateway...');
+    await client.destroy().catch(() => undefined);
+    await client.login(env.DISCORD_TOKEN);
+    disconnectedSince = null;
+  } catch (err) {
+    console.error('Erro ao reconectar ao Discord Gateway:', err);
+  } finally {
+    isReconnecting = false;
+  }
+}
+
 const healthPort = Number(process.env.PORT) || 10000;
 const healthServer = createServer((_req, res) => {
+  const ready = client.isReady() && client.ws.status === 0;
+  if (!ready) {
+    void ensureDiscordGatewayConnected();
+  }
+
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(
     JSON.stringify({
-      status: 'online',
+      status: ready ? 'online' : 'reconnecting',
+      ready,
+      ws_status: client.ws.status,
+      ping_ms: client.ws.ping,
       bot: client.user?.tag ?? 'LWX Lab',
       uptime_sec: Math.floor(process.uptime()),
     }),
@@ -478,4 +522,20 @@ healthServer.listen(healthPort, '0.0.0.0', () => {
   console.log(`🌐 Healthcheck HTTP ativo em 0.0.0.0:${healthPort} (Render / Cron-Job ready)`);
 });
 
+// Watchdog every 45s to heal zombie WebSocket states after Render idle throttling
+setInterval(() => {
+  void ensureDiscordGatewayConnected();
+}, 45_000);
+
+// External keep-alive ping every 4 minutes to prevent Render 15-min idle spin-down
+const externalHealthUrl =
+  process.env.RENDER_EXTERNAL_URL
+    ? `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, '')}/health`
+    : 'https://bot-lwx-lab.onrender.com/health';
+
+setInterval(() => {
+  fetch(externalHealthUrl, { headers: { 'User-Agent': 'LWX-Lab-KeepAlive/2.0' } }).catch(() => undefined);
+}, 4 * 60 * 1000);
+
 void client.login(env.DISCORD_TOKEN);
+

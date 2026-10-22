@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DISCORD_CLIENT_ID
-        value: "1493072348868251758"
+        value: "1493045988888285185"
       - key: DISCORD_GUILD_ID
         value: "1441608284061569209"
       - key: DISCORD_TOKEN
