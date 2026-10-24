@@ -185,10 +185,31 @@ export async function callSiliaModelRouter(req: RouterRequest): Promise<RouterRe
       FALLBACK_VERTEX_MODEL_2,
     ].filter((m, idx, arr) => Boolean(m) && arr.indexOf(m) === idx);
 
+    const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID?.trim();
+    const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET?.trim();
+    const refreshToken = (
+      process.env.GOOGLE_CLOUD_REFRESH_TOKEN || process.env.GOOGLE_DRIVE_REFRESH_TOKEN
+    )?.trim();
+
+    const googleAuthOptions =
+      !process.env.GOOGLE_APPLICATION_CREDENTIALS && clientId && clientSecret && refreshToken
+        ? {
+            credentials: {
+              type: 'authorized_user' as const,
+              client_id: clientId,
+              client_secret: clientSecret,
+              refresh_token: refreshToken,
+              quota_project_id: project,
+            },
+            projectId: project,
+          }
+        : undefined;
+
     const client = new GoogleGenAI({
       vertexai: true,
       project,
       location,
+      ...(googleAuthOptions ? { googleAuthOptions } : {}),
     });
 
     const contents = sanitizeGemini3History(history, req.userPrompt);
