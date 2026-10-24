@@ -185,8 +185,12 @@ export async function callSiliaModelRouter(req: RouterRequest): Promise<RouterRe
       FALLBACK_VERTEX_MODEL_2,
     ].filter((m, idx, arr) => Boolean(m) && arr.indexOf(m) === idx);
 
-    const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID?.trim();
-    const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET?.trim();
+    const clientId = (
+      process.env.GOOGLE_CLOUD_CLIENT_ID || process.env.GOOGLE_DRIVE_CLIENT_ID
+    )?.trim();
+    const clientSecret = (
+      process.env.GOOGLE_CLOUD_CLIENT_SECRET || process.env.GOOGLE_DRIVE_CLIENT_SECRET
+    )?.trim();
     const refreshToken = (
       process.env.GOOGLE_CLOUD_REFRESH_TOKEN || process.env.GOOGLE_DRIVE_REFRESH_TOKEN
     )?.trim();
