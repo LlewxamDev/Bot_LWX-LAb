@@ -1,0 +1,72 @@
+{
+  "version": "2.0.0",
+  "positiveExamples": [
+    {
+      "id": "ex-pos-banner-knight",
+      "category": "banner",
+      "clientRequest": "Quero um banner pro meu servidor do Discord chamado Noctis Realm, tema cavaleiro sombrio com fogo azul",
+      "whyItIsGood": "Define composição 16:9 com margem segura de 10%, paleta HEX exata com proporções 50/25/15/5/5, tipografia Cinzel Bold + Plus Jakarta Sans, e roteiro de iluminação em 3 planos.",
+      "proposalSummary": {
+        "title": "Chama Abissal de Noctis • Banner Oficial HD",
+        "palette": [
+          { "name": "Abismo Noctis", "hex": "#0E0A1A", "role": "neutra_fundo", "proportionPct": 50 },
+          { "name": "Chama Etérea Ciano", "hex": "#38BDF8", "role": "dominante", "proportionPct": 25 },
+          { "name": "Violeta Arcano", "hex": "#7C3AED", "role": "secundaria", "proportionPct": 15 },
+          { "name": "Brasa Carmesim", "hex": "#F43F5E", "role": "acento", "proportionPct": 5 },
+          { "name": "Prata Lunar", "hex": "#F8FAFC", "role": "neutra_texto", "proportionPct": 5 }
+        ],
+        "typography": {
+          "titleFont": "Cinzel Decorative Bold",
+          "subtitleFont": "Plus Jakarta Sans SemiBold"
+        }
+      }
+    },
+    {
+      "id": "ex-pos-logo-esports",
+      "category": "logo",
+      "clientRequest": "Preciso de uma logo pra minha guilda competitiva chamada VORTEX, algo agressivo e moderno",
+      "whyItIsGood": "Prioriza silhueta fechada legível em 48x48px (ícone do Discord), geometria vetorial limpa e alto contraste.",
+      "proposalSummary": {
+        "title": "Emblema VORTEX • Identidade Competitiva",
+        "palette": [
+          { "name": "Carbono Absoluto", "hex": "#111318", "role": "neutra_fundo", "proportionPct": 45 },
+          { "name": "Roxo Vórtice", "hex": "#8B5CF6", "role": "dominante", "proportionPct": 30 },
+          { "name": "Ciano Hipersônico", "hex": "#06B6D4", "role": "secundaria", "proportionPct": 15 },
+          { "name": "Branco Titânio", "hex": "#FFFFFF", "role": "neutra_texto", "proportionPct": 10 }
+        ],
+        "typography": {
+          "titleFont": "Montserrat Black Italic (Custom Cut)",
+          "subtitleFont": "Inter Bold"
+        }
+      }
+    },
+    {
+      "id": "ex-pos-oc-illustration",
+      "category": "illustration",
+      "clientRequest": "Quero desenhar minha OC de anime cyberpunk, ela tem cabelo prateado e jaqueta holográfica",
+      "whyItIsGood": "Especifica ângulo de câmera 3/4 low-angle, linha de ação, rim light dupla (ciano/magenta) e separação de foco entre personagem e beco neon ao fundo.",
+      "proposalSummary": {
+        "title": "Retrato Cyberpunk Autoral • OC Silver Holo",
+        "palette": [
+          { "name": "Noite Neo-Tokyo", "hex": "#0B0F19", "role": "neutra_fundo", "proportionPct": 45 },
+          { "name": "Prata Cromado", "hex": "#E2E8F0", "role": "dominante", "proportionPct": 25 },
+          { "name": "Holo Cyan", "hex": "#22D3EE", "role": "secundaria", "proportionPct": 15 },
+          { "name": "Neon Magenta", "hex": "#EC4899", "role": "acento", "proportionPct": 10 },
+          { "name": "Luz Especular", "hex": "#FFFFFF", "role": "neutra_texto", "proportionPct": 5 }
+        ]
+      }
+    }
+  ],
+  "negativeExamples": [
+    {
+      "id": "ex-neg-vague-slop",
+      "flawedOutput": "Vou fazer um banner bonito com cores vibrantes, uma fonte legal no meio e efeitos modernos para chamar atenção.",
+      "whyItIsBad": "Zero códigos HEX, zero especificação de fontes reais, não define hierarquia de planos nem margem segura. O designer teria que adivinhar 100% da peça."
+    },
+    {
+      "id": "ex-neg-cluttered-composition",
+      "flawedOutput": "Colocar 4 personagens grandes, 3 parágrafos de texto, 8 cores neon diferentes e fundo cheio de detalhes nítidos.",
+      "whyItIsBad": "Viola a hierarquia visual e o espaço negativo. Sem ponto focal único e sem desfoque de fundo, a peça vira ruído visual ilegível no celular."
+    }
+  ]
+}

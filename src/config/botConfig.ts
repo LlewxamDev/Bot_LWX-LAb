@@ -90,6 +90,11 @@ export const BOT_CONFIG = {
     siliaIdeate: 'lwx:silia:ideate',
     siliaToBriefing: 'lwx:silia:to_briefing',
     siliaClear: 'lwx:silia:clear',
+    siliaProposalApprove: 'lwx:silia:proposal_approve',
+    siliaProposalReject: 'lwx:silia:proposal_reject',
+    siliaDiagFocus: 'lwx:silia:diag_focus',
+    siliaContinueChat: 'lwx:silia:continue_chat',
+    siliaFinalizeClose: 'lwx:silia:finalize_close',
   },
   panelMarkers: {
     register: 'LWX_PANEL_REGISTER_V1',

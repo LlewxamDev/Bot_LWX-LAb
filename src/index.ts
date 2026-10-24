@@ -39,7 +39,11 @@ import { handleReviewModalSubmit, handleReviewOpenModalButton } from './systems/
 import {
   handleSiliaChannelMessage,
   handleSiliaClearButton,
+  handleSiliaContinueChatButton,
+  handleSiliaDiagnosticFocusButton,
+  handleSiliaFinalizeCloseButton,
   handleSiliaModeButton,
+  handleSiliaProposalDecisionButton,
   handleSiliaToBriefingButton,
 } from './systems/silia.js';
 import {
@@ -133,6 +137,31 @@ async function routeInteraction(interaction: Interaction): Promise<void> {
 
     if (customId === BOT_CONFIG.customIds.siliaClear) {
       await handleSiliaClearButton(interaction);
+      return;
+    }
+
+    if (customId.startsWith(`${BOT_CONFIG.customIds.siliaProposalApprove}:`)) {
+      await handleSiliaProposalDecisionButton(interaction, 'approve');
+      return;
+    }
+
+    if (customId.startsWith(`${BOT_CONFIG.customIds.siliaProposalReject}:`)) {
+      await handleSiliaProposalDecisionButton(interaction, 'reject');
+      return;
+    }
+
+    if (customId.startsWith(`${BOT_CONFIG.customIds.siliaDiagFocus}:`)) {
+      await handleSiliaDiagnosticFocusButton(interaction);
+      return;
+    }
+
+    if (customId === BOT_CONFIG.customIds.siliaContinueChat) {
+      await handleSiliaContinueChatButton(interaction);
+      return;
+    }
+
+    if (customId === BOT_CONFIG.customIds.siliaFinalizeClose) {
+      await handleSiliaFinalizeCloseButton(interaction);
       return;
     }
 

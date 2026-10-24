@@ -1,7 +1,12 @@
 node_modules/
 .env
 .env.*
+!.env.example
 data/runtime/
+data/silia-sessions.json
+data/briefings/
+*service-account*.json
+*.key.json
 npm-debug.log*
 dist/
 coverage/
